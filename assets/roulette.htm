@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>輪盤小遊戲</title>
+    <style>
+        body {
+            background-image: url('https://storage.googleapis.com/crossing-cms-cwg-tw/article/202005/article-5ed0c668cf42e.jpg');
+            background-repeat: no-repeat;
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: white;
+        }
+
+        .game-wrapper {
+            display: flex;
+            gap: 50px;
+            background: rgba(0, 0, 0, 0.75);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+        }
+
+        /* 輪盤區 */
+        .wheel-container {
+            position: relative;
+            width: 500px;
+            height: 500px;
+        }
+
+        #t1 {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 60px;
+            font-weight: bold;
+            color: #FFD700;
+            background: rgba(0, 0, 0, 0.6);
+            border: 4px solid #FFD700;
+            border-radius: 15px;
+            width: 100px;
+            height: 100px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 0 20px #FFD700;
+        }
+
+        .circle-item {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            font-weight: bold;
+            color: white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+            transition: background-color 0.1s;
+        }
+
+        /* 控制與下注區 */
+        .board-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 10px;
+        }
+
+        .controls button {
+            flex: 1;
+            padding: 12px 24px;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            border-radius: 8px;
+            color: white;
+            transition: transform 0.1s, filter 0.2s;
+        }
+        
+        .controls button:hover { filter: brightness(1.2); }
+        .controls button:active { transform: scale(0.95); }
+        .btn-run { background-color: #28a745; }
+        .btn-stop { background-color: #dc3545; }
+
+        .money-display {
+            font-size: 24px;
+            font-weight: bold;
+            color: #FFD700;
+            background: #222;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            border: 2px solid #555;
+        }
+
+        /* 下注桌 */
+        table {
+            border-collapse: collapse;
+            background-color: #0b6b3a;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+        }
+
+        td {
+            width: 60px;
+            height: 60px;
+            text-align: center;
+            vertical-align: middle;
+            font-size: 20px;
+            font-weight: bold;
+            border: 1px solid rgba(255,255,255,0.2);
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        td:hover { filter: brightness(1.3); }
+
+        .bg-red { background-color: #d32f2f; color: white; }
+        .bg-black { background-color: #212121; color: white; }
+        .bg-gray { background-color: #757575; color: white; }
+        .bg-white { background-color: #ffffff; color: black; }
+        .bg-green { background-color: #388e3c; color: white; }
+        .bg-yellow { background-color: #fbc02d; color: black; }
+
+        /* 選中狀態 */
+        .in {
+            box-shadow: inset 0 0 0 4px #FFD700, 0 0 15px #FFD700 !important;
+            transform: scale(0.95);
+        }
+    </style>
+</head>
+<body onload="InitGame()">
+
+    <div class="game-wrapper">
+        <!-- 輪盤區 -->
+        <div class="wheel-container" id="wheel">
+            <div id="t1">0</div>
+        </div>
+
+        <!-- 操作與下注區 -->
+        <div class="board-container">
+            <div class="controls">
+                <button class="btn-run" onClick="Startgame()">開始 RUN</button>
+                <button class="btn-stop" onClick="Stopmoving()">停止 STOP</button>
+            </div>
+            
+            <div class="money-display" id="money">You have 1000 money left.</div>
+            
+            <table>
+                <tr>
+                    <td id="a" class="bg-gray in" onclick="SE(10, this)">10</td>
+                    <td id="b" class="bg-white" onclick="SE(20, this)">20</td>
+                    <td id="c" class="bg-white" onclick="SE(50, this)">50</td>
+                    <td id="22" class="bg-red" onclick="putmoney(this)">紅</td>
+                    <td id="21" class="bg-black" onclick="putmoney(this)">黑</td>
+                </tr>
+                <tr>
+                    <td id="1" class="bg-black" onclick="putmoney(this)">1</td>
+                    <td id="2" class="bg-red" onclick="putmoney(this)">2</td>
+                    <td id="3" class="bg-black" onclick="putmoney(this)">3</td>
+                    <td id="4" class="bg-red" onclick="putmoney(this)">4</td>
+                    <td id="5" class="bg-black" onclick="putmoney(this)">5</td>
+                    <td id="25" class="bg-white" onclick="putmoney(this)">單</td>
+                </tr>
+                <tr>
+                    <td id="6" class="bg-red" onclick="putmoney(this)">6</td>
+                    <td id="7" class="bg-black" onclick="putmoney(this)">7</td>
+                    <td id="8" class="bg-red" onclick="putmoney(this)">8</td>
+                    <td id="9" class="bg-black" onclick="putmoney(this)">9</td>
+                    <td id="10" class="bg-red" onclick="putmoney(this)">10</td>
+                    <td id="26" class="bg-white" onclick="putmoney(this)">雙</td>
+                </tr>
+                <tr>
+                    <td id="11" class="bg-black" onclick="putmoney(this)">11</td>
+                    <td id="12" class="bg-red" onclick="putmoney(this)">12</td>
+                    <td id="13" class="bg-black" onclick="putmoney(this)">13</td>
+                    <td id="14" class="bg-red" onclick="putmoney(this)">14</td>
+                    <td id="15" class="bg-black" onclick="putmoney(this)">15</td>
+                    <td id="23" class="bg-white" onclick="putmoney(this)">前10</td>
+                </tr>
+                <tr>
+                    <td id="16" class="bg-red" onclick="putmoney(this)">16</td>
+                    <td id="17" class="bg-black" onclick="putmoney(this)">17</td>
+                    <td id="18" class="bg-red" onclick="putmoney(this)">18</td>
+                    <td id="19" class="bg-black" onclick="putmoney(this)">19</td>
+                    <td id="20" class="bg-red" onclick="putmoney(this)">20</td>
+                    <td id="24" class="bg-white" onclick="putmoney(this)">後10</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        var i1 = 1;
+        var total = 1000;
+        var click = 0;
+        var run1;
+        var r = 200;
+        var x = 250, y = 250;
+        var m = new Array(30).fill(0);
+        var m1 = new Array(30).fill(0);
+        var m2 = 10;
+
+        function InitGame() {
+            GiveMoney();
+            var wheel = document.getElementById("wheel");
+            
+            // 建立 1~20 的輪盤圓圈
+            for (let i = 18; i <= 360; i += 18) {
+                let div = document.createElement("div");
+                div.id = "c" + i;
+                div.className = "circle-item " + ((i / 18) % 2 === 0 ? "bg-red" : "bg-black");
+                div.innerHTML = i / 18;
+                
+                // 圓周運算
+                let posX = x + r * Math.cos((i + 270) * (Math.PI / 180)) - 25; // -25 for center alignment
+                let posY = y + r * Math.sin((i + 270) * (Math.PI / 180)) - 25;
+                
+                div.style.left = posX + "px";
+                div.style.top = posY + "px";
+                wheel.appendChild(div);
+            }
+            
+            // 建立指針軌跡
+            for (let i = 0; i < (r - 40); i += 5) {
+                let pointer = document.createElement("div");
+                pointer.id = "p" + i;
+                pointer.style.position = "absolute";
+                pointer.style.width = "4px";
+                pointer.style.height = "4px";
+                pointer.style.backgroundColor = "#00BFFF";
+                pointer.style.borderRadius = "50%";
+                
+                let posX = x + i * Math.cos(270 * (Math.PI / 180));
+                let posY = y + i * Math.sin(270 * (Math.PI / 180));
+                
+                pointer.style.left = posX + "px";
+                pointer.style.top = posY + "px";
+                wheel.appendChild(pointer);
+            }
+        }
+
+        function move() {
+            i1++;
+            if (i1 > 20) i1 = 1;
+            document.getElementById('t1').innerHTML = i1;
+
+            let i2 = i1 * 18;
+            let id1 = "c" + i2;
+            let id2 = i1 === 1 ? "c" + (20 * 18) : "c" + ((i1 - 1) * 18);
+
+            // 恢復前一個格子的顏色
+            document.getElementById(id2).style.backgroundColor = ""; 
+            
+            // 點亮當前格子
+            document.getElementById(id1).style.backgroundColor = "#00BFFF";
+
+            // 轉動指針
+            for (let i = 0; i < (r - 40); i += 5) {
+                let x1 = x + i * Math.cos((i1 * 18 - 90) * (Math.PI / 180));
+                let y1 = y + i * Math.sin((i1 * 18 - 90) * (Math.PI / 180));
+                let p = document.getElementById('p' + i);
+                p.style.left = x1 + "px";
+                p.style.top = y1 + "px";
+            }
+        }
+
+        function putmoney(obj) {
+            if (!obj.classList.contains("in")) {
+                // 下注
+                obj.classList.add("in");
+                click += 1;
+                total -= m2;
+                m[obj.innerHTML] = m2; 
+                m1[obj.id] = m2; 
+            } else {
+                // 取消下注
+                obj.classList.remove("in");
+                click -= 1;
+                total += m1[obj.id]; 
+            }
+            GiveMoney();
+        }
+
+        function checkwin() {
+            let displayedNumber = parseInt(document.getElementById("t1").innerHTML);
+
+            for (let i = 1; i <= 26; i++) {
+                let obj = document.getElementById(i);
+                if (obj && obj.classList.contains("in")) {
+                    let buttonText = obj.innerHTML;
+                    
+                    // 單號碼全中
+                    if (buttonText == displayedNumber) {
+                        total += parseInt(m[i] * (20 / click));
+                    }
+                    // 特殊規則判定 (單/雙/紅/黑/前10/後10)
+                    else if (buttonText === "單" && displayedNumber % 2 !== 0) total += m1[i] * 2;
+                    else if (buttonText === "雙" && displayedNumber % 2 === 0) total += m1[i] * 2;
+                    else if (buttonText === "前10" && displayedNumber >= 1 && displayedNumber <= 10) total += m1[i] * 2;
+                    else if (buttonText === "後10" && displayedNumber >= 11 && displayedNumber <= 20) total += m1[i] * 2;
+                    else if (buttonText === "紅" && displayedNumber % 2 === 0) total += m1[i] * 2; // 原本的偶數是紅
+                    else if (buttonText === "黑" && displayedNumber % 2 !== 0) total += m1[i] * 2; // 原本的奇數是黑
+                }
+            }
+            GiveMoney();
+        }
+
+        function Stopmoving() {
+            if(!run1) return;
+            clearInterval(run1);
+            run1 = null;
+            checkwin();
+
+            // 清除桌面籌碼狀態
+            for (let i = 1; i <= 26; i++) {
+                let obj = document.getElementById(i);
+                if (obj && obj.classList.contains("in")) {
+                    obj.classList.remove("in");
+                }
+            }
+            click = 0;
+            GiveMoney();
+        }
+
+        function Startgame() {
+            if(!run1) {
+                run1 = window.setInterval(move, 150); // 稍微加快一點轉速，體驗更好
+            }
+        }
+
+        function GiveMoney() {
+            document.getElementById("money").innerHTML = "You have " + total + " money left.";
+        }
+
+        function SE(amount, obj) {
+            m2 = amount;
+            // 清除籌碼選擇的外觀
+            document.getElementById("a").className = "bg-gray";
+            document.getElementById("b").className = "bg-white";
+            document.getElementById("c").className = "bg-white";
+
+            // 設定選中狀態
+            if (amount === 10) obj.className = "bg-gray in";
+            if (amount === 20) obj.className = "bg-green in";
+            if (amount === 50) obj.className = "bg-yellow in";
+        }
+    </script>
+</body>
+</html>
